@@ -17,6 +17,7 @@ const app = express();
 app.use(morgan('dev'));
 
 // Setup cors
+
 app.use(cors())
 
 // Setup request body JSON parsing.

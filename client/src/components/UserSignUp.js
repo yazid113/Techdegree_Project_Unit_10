@@ -1,110 +1,101 @@
-import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link, useNavigate } from 'react-router-dom';
 import Form from './Form';
 
-export default class UserSignUp extends Component {
-  state = {
-    name: '',
-    username: '',
-    password: '',
-    errors: [],
-  }
+export default function UserSignUp({ context }) {
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [emailAddress, setEmailAddress] = useState('');
+    const [password, setPassword] = useState('');
+    const [errors, setErrors] = useState('');
 
-  render() {
-    const {
-      name,
-      username,
-      password,
-      errors,
-    } = this.state;
+    const navigate = useNavigate();
+
+    const submit = () => {
+        const user = {
+            firstName,
+            lastName,
+            emailAddress,
+            password,
+        };
+
+        context.data.createUser(user)
+            .then( () => {
+                console.log(`${firstName} is signed up.`);
+                context.actions.signIn(emailAddress, password)
+                    .then(() => {
+                        navigate('/');
+                    });
+                console.log(`${emailAddress} is signed up and authenticated.`)
+            })
+            .catch (error => {
+                if (error.response) {
+                    setErrors(error.response.data.errors)
+                } else {
+                    navigate('/error');
+                }
+            });
+    }
+
+    const cancel = () => {
+        navigate('/');
+    }
 
     return (
-      <div className="bounds">
-        <div className="grid-33 centered signin">
-          <h1>Sign Up</h1>
-          <Form 
-            cancel={this.cancel}
-            errors={errors}
-            submit={this.submit}
-            submitButtonText="Sign Up"
-            elements={() => (
-              <React.Fragment>
-                <input 
-                  id="name" 
-                  name="name" 
-                  type="text"
-                  value={name} 
-                  onChange={this.change} 
-                  placeholder="Name" />
-                <input 
-                  id="username" 
-                  name="username" 
-                  type="text"
-                  value={username} 
-                  onChange={this.change} 
-                  placeholder="User Name" />
-                <input 
-                  id="password" 
-                  name="password"
-                  type="password"
-                  value={password} 
-                  onChange={this.change} 
-                  placeholder="Password" />
-              </React.Fragment>
-            )} />
-          <p>
-            Already have a user account? <Link to="/signin">Click here</Link> to sign in!
-          </p>
-        </div>
-      </div>
+            <div className="form--centered">
+                <h2>Sign Up</h2>
+
+                <Form
+                    cancel={cancel}
+                    errors={errors}
+                    submit={submit}
+                    submitButtonText='Sign Up'
+                    elements={() => (
+                        <React.Fragment>
+                            <label> First Name
+                                <input
+                                    id="firstName"
+                                    name="firstName"
+                                    type="text"
+                                    value={firstName}
+                                    onChange={e => setFirstName(e.target.value)}
+                                    placeholder='First Name'
+                                />
+                            </label>
+                            <label>Last Name
+                                <input
+                                    id="lastName"
+                                    name="lastName"
+                                    type="text"
+                                    value={lastName}
+                                    onChange={e => setLastName(e.target.value)}
+                                    placeholder='Last Name'
+                                />
+                            </label>
+                            <label>Email Address
+                                <input
+                                    id="emailAddress"
+                                    name="emailAddress"
+                                    type="email"
+                                    value={emailAddress}
+                                    onChange={e => setEmailAddress(e.target.value)}
+                                    placeholder='Email Address'
+                                />
+                            </label>
+                            <label>Password
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    placeholder='Password'
+                                />
+                            </label>
+                        </React.Fragment>
+                    )}
+                />
+                <p>Already have a user account? Click here to <Link to="/signin">Sign In</Link>!</p>
+            </div>
     );
-  }
-
-  change = (event) => {
-    const name = event.target.name;
-    const value = event.target.value;
-
-    this.setState(() => {
-      return {
-        [name]: value
-      };
-    });
-  }
-
-  submit = () => {
-    const { context } = this.props;
-
-    const {
-      name,
-      username,
-      password,
-    } = this.state;
-    
-    // New user payload
-    const user = {
-      name,
-      username,
-      password,
-    };
-    context.data.createUser(user)
-      .then(errors =>{
-        if (errors.length) {
-          this.setState({ errors });
-        }
-        else {
-          context.actions.signIn(username, password)
-          .then(() => {
-            this.props.history.push('/authenticated');    
-          })
-        }
-      })
-      .catch( err => { // handle rejected promises
-        console.log(err);
-        this.props.history.push('/error'); // push to history stack
-      });
-  }
-
-  cancel = () => {
-    this.props.history.push('/');
-  }
 }
